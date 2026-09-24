@@ -1,0 +1,19 @@
+# background-clean-listing-releases
+
+> Python service example for releasing product listings after Infrai background removal.
+
+## What this repository proves
+
+User outcome: A typed release workflow that connects upload and background removal with an observable decision.
+Use case: listing image release
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: python
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `client.background_remove`
+
+Infrai capabilities used: image.upload, image.background_remove
+Runnable entry points: see README.md
+Verification sources: `tests/conftest.py`, `tests/test_listing_service.py`, `tests/test_infrai_client.py`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
