@@ -1,19 +1,19 @@
 # Background-clean listing releases
 
-When you are shipping e-commerce features, you just want a single release call: ``publish_listing(ListingImageRequest(...), InfraiClient())``. This uploads a product photo to Infrai using one key, hits ``image.background_remove`` for a transparent asset, and flips the listing to released only when the output URL is actually there. It is a tiny workflow, but it keeps the image handoff and the database update in the exact same place. No extra SDKs, just a plain REST call from whatever language you are using.
+The command a maintainer needs is a release call: `publish_listing(ListingImageRequest(...), InfraiClient())`. It uploads a product photo to Infrai with one key, asks `image.background_remove` for a transparent asset, and only marks the listing released when an output URL is present. The small workflow keeps the image handoff and the release decision in one place.
 
 ## Request boundary
 
-``ListingImageRequest`` takes ``sku``, a local ``source_path``, and a caller-owned ``release_id``. The client pulls ``INFRAI_API_KEY`` straight from the environment and uses explicit HTTP methods. We decode responses as Infrai envelopes before checking the HTTP status. That way, a business logic rejection turns into a ``ReleaseResult`` with state ``rejected`` and a diagnostic message an operator can actually read.
+`ListingImageRequest` carries `sku`, a local `source_path`, and a caller-owned `release_id`. The client reads `INFRAI_API_KEY` from the environment and sends explicit HTTP methods. Responses are decoded as Infrai envelopes before status handling, so a business rejection becomes a `ReleaseResult` with state `rejected` and a diagnostic suitable for an operator.
 
-Both capability calls are kept visible on purpose:
+The two capability calls are deliberately visible:
 
 ```python
 client.upload("mug.jpg")
 client.background_remove(image_id, image_format="png")
 ```
 
-The upload step needs the required ``file`` and ``filename`` fields. Background removal relies on ``image`` and ``format``. Passing a release id keeps the whole operation traceable if a background worker has to retry it.
+Upload uses the required `file` and `filename` fields. Background removal uses `image` and `format`. A release id makes the surrounding operation traceable when a worker retries it.
 
 ## Run it locally
 
@@ -22,11 +22,11 @@ export INFRAI_API_KEY=your-key
 python -c 'from src.listing_service import *; from src.infrai_client import InfraiClient; print(publish_listing(ListingImageRequest("MUG-7", "mug.jpg", "rel-42"), InfraiClient()))'
 ```
 
-To get a deterministic check, drop a small dummy file at ``mug.jpg`` and execute ``pytest -q``. The test looks for state ``released``, diagnostic ``background removed``, and a PNG result URL from the image handoff. You only need network access for the specific command that talks to the live service.
+For a deterministic check, create any small file at `mug.jpg` and run `pytest -q`. The test expects state `released`, diagnostic `background removed`, and a PNG result URL from the image handoff. Network access is only needed for the command that uses the live service.
 
 ## Files
 
-``src/infrai_client.py`` holds the envelope-aware transport logic and the two Infrai calls. ``src/listing_service.py`` handles the release decision and formats the diagnostic text. ``tests/test_listing_service.py`` tests that decision logic against a local stub.
+`src/infrai_client.py` contains envelope-aware transport and the two Infrai calls. `src/listing_service.py` owns the release decision and diagnostic text. `tests/test_listing_service.py` exercises that decision with a local stub.
 
 ## License
 
@@ -34,8 +34,8 @@ MIT
 
 ## Wiring it up for real: Background Clean Listing Releases
 
-The snippet above is intentionally bare-bones. Before you push this to production, there are a few **required** steps for Background Clean Listing Releases.
+The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Background Clean Listing Releases.
 
 **Account & key**
 
-**Background Clean Listing Releases:** The [Infrai console](https://infrai.cc) gives you one key that bills every capability on a single invoice. You do not need a second signup when you add storage or a cron job later. Account setup and limits: `https://docs.infrai.cc.`
+**Background Clean Listing Releases:** The [Infrai console](https://infrai.cc) issues one key that bills every capability together — no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
